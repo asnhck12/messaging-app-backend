@@ -12,10 +12,19 @@ async function insertUser(username,password) {
 }
 
 //message queries
+async function getAllMessages() {
+    const { rows } = await pool.query("SELECT * FROM messages");    
+    return rows;
+}
 
+async function insertMessage(message) {
+    await pool.query("INSERT INTO messages (message) VALUES ($1)", [message]);
+}
 
 //export
 module.exports = {
     getAllUsers,
-    insertUser
+    insertUser,
+    getAllMessages,
+    insertMessage
 }
