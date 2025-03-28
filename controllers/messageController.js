@@ -1,10 +1,10 @@
 require("dotenv").config();
 const asyncHandler = require("express-async-handler");
-const db = require("../db/queries");
+const prisma = require('../db/prisma');
 
 exports.getMessages = asyncHandler(async(req,res,next) => {
     try {
-    const messages = await db.getAllMessages();
+    const messages = await prisma.messages.findMany();
     res.send("Messages: " + messages.map(message => message.message).join(", "));
 }
 catch (error) {
@@ -15,7 +15,11 @@ catch (error) {
 exports.newMessage = asyncHandler(async(req,res,next) => {
     const { message } = req.body;
     try {
-        await db.insertMessage(message);
+        await prisma.messages.create({
+            data:{
+                message:message
+            }
+        });
         res.redirect("/");
     }
     catch(error) {
