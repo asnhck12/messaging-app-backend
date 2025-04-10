@@ -9,4 +9,10 @@ router.get('/',user_controller.getUsers);
 /* POST new users */
 router.post('/signup',user_controller.newUser)
 
+/* GET user login */
+router.post('/login',user_controller.userLogin)
+
+/* GET user logout */
+router.post('/logout',user_controller.userLogout)
+
 module.exports = router;
