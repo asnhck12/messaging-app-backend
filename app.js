@@ -21,7 +21,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
-app.use(session({ secret: "cats", resave: false, saveUninitialized: true }));
+app.use(session({ secret: process.env.sessionSecret, resave: false, saveUninitialized: true }));
 
 // async function main() {
 //     const allUsers = await prisma.users.findMany();
@@ -41,7 +41,6 @@ app.use(session({ secret: "cats", resave: false, saveUninitialized: true }));
 
 app.use(passport.initialize());
 app.use(passport.session());
-app.use(session({ secret: "cats", resave: false, saveUninitialized: true }));
 
 passport.use(
   new LocalStrategy(async (username, password, done) => {
