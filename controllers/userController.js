@@ -1,6 +1,8 @@
 require("dotenv").config();
 const asyncHandler = require("express-async-handler");
-const prisma = require('../db/prisma');
+const { PrismaClient } = require("@prisma/client");
+const prisma = new PrismaClient();
+const { body, validationResult } = require("express-validator");
 const bcrypt = require("bcrypt");
 const passport = require("passport");
 const jwt = require('jsonwebtoken');
@@ -16,34 +18,42 @@ catch (error) {
 }
 })
 
-exports.newUser = asyncHandler(async(req,res,next) => {
-    const { username,password } = req.body;
-    try {
-        const userExists = await prisma.users.findUnique({
-            where: {
-                username: username,
-            },
-        })
-        if (!userExists) {
-            const hashedPassword = await bcrypt.hash(password, 10);
-
-            await prisma.users.create({
-                data:{
-                    username: username,
-                    password: hashedPassword,
+exports.newUser = [
+    body("username", "Please enter a Username").trim().isLength({ min:2 }).escape(),
+    body("password", "Please enter a Password").isLength({ min:8 }).escape(),
+    body("confirm_password", "Please confirm your Password").custom((value, { req }) => {
+        if (value !== req.body.password) {
+            throw new Error("Passwords do not match");
+        }
+        return true;
+    }),
+    asyncHandler(async (req, res, next) => {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            console.log("Validation errors:", errors.array());
+            return res.status(400).json({ errors: errors.array() });
+        }
+        try {
+            const userExists = await prisma.users.findUnique({ where: {
+                username: req.body.username} });
+                    if (userExists) {
+                        return res.status(400).json({ errors: [{ msg: "Username already exists" }] });
+                    }
+        
+                    const hashedPassword = await bcrypt.hash(req.body.password, 10);
+        
+                    const user = await prisma.users.create({
+                        data: {
+                        username: req.body.username,
+                        password: hashedPassword,
+                        }
+                    });
+        
+                    res.status(201).json({ message: "User created successfully" });
+                } catch (err) {
+                    return next(err);
                 }
-            })
-        res.redirect("/");
-        }
-        else {
-            res.send("User already exists");
-        }
-    }
-    catch(error) {
-        next(error);
-    }
-    
-})
+            })]
 
 exports.userLogin = (req, res, next) => {
     passport.authenticate("local", async (err, user, info) => {

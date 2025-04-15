@@ -5,7 +5,7 @@ const prisma = require('../db/prisma');
 exports.getMessages = asyncHandler(async(req,res,next) => {
     try {
     const messages = await prisma.messages.findMany();
-    res.send("Messages: " + messages.map(message => message.message).join(", "));
+    res.json(messages);
 }
 catch (error) {
     next(error);
@@ -20,7 +20,7 @@ exports.newMessage = asyncHandler(async(req,res,next) => {
                 message:message
             }
         });
-        res.redirect("/");
+        res.status(201).json({message: "Message created successfully"});
     }
     catch(error) {
         console.log(error);
