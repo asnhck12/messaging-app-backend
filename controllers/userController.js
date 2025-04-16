@@ -10,7 +10,7 @@ const { blacklistToken } = require('../middleware/jwtMiddleware');
 
 exports.getUsers = asyncHandler(async(req,res,next) => {
     try {
-    const usernames = await prisma.users.findMany();
+    const usernames = await prisma.User.findMany();
     res.send("Usernames: " + usernames.map(user => user.username).join(", "));
 }
 catch (error) {
@@ -34,7 +34,7 @@ exports.newUser = [
             return res.status(400).json({ errors: errors.array() });
         }
         try {
-            const userExists = await prisma.users.findUnique({ where: {
+            const userExists = await prisma.User.findUnique({ where: {
                 username: req.body.username} });
                     if (userExists) {
                         return res.status(400).json({ errors: [{ msg: "Username already exists" }] });
@@ -42,7 +42,7 @@ exports.newUser = [
         
                     const hashedPassword = await bcrypt.hash(req.body.password, 10);
         
-                    const user = await prisma.users.create({
+                    const user = await prisma.User.create({
                         data: {
                         username: req.body.username,
                         password: hashedPassword,

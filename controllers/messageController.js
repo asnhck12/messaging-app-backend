@@ -4,7 +4,7 @@ const prisma = require('../db/prisma');
 
 exports.getMessages = asyncHandler(async(req,res,next) => {
     try {
-    const messages = await prisma.messages.findMany();
+    const messages = await prisma.Message.findMany();
     res.json(messages);
 }
 catch (error) {
@@ -13,11 +13,13 @@ catch (error) {
 })
 
 exports.newMessage = asyncHandler(async(req,res,next) => {
-    const { message } = req.body;
+    const { content } = req.body;
+    const username = req.user.username;
     try {
-        await prisma.messages.create({
+        await prisma.Message.create({
             data:{
-                message:message
+                content: content,
+                user: username,
             }
         });
         res.status(201).json({message: "Message created successfully"});

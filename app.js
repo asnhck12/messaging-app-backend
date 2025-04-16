@@ -11,7 +11,6 @@ var logger = require('morgan');
 const LocalStrategy = require("passport-local").Strategy;
 const bcrypt = require("bcrypt");
 const passport = require("passport");
-// const User = require("./prisma/")
 
 var indexRouter = require('./routes');
 
@@ -23,29 +22,13 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(session({ secret: process.env.sessionSecret, resave: false, saveUninitialized: true }));
 
-// async function main() {
-//     const allUsers = await prisma.users.findMany();
-//     console.log(allUsers);
-// }
-
-// main()
-// .then(async () => {
-//     await prisma.$disconnect()
-// })
-// .catch(async (e) => {
-//     console.error(e);
-//     await prisma.$disconnect();
-//     process.exit(1);
-// })
-
-
 app.use(passport.initialize());
 app.use(passport.session());
 
 passport.use(
   new LocalStrategy(async (username, password, done) => {
     try {
-      const user = await prisma.users.findUnique({
+      const user = await prisma.User.findUnique({
         where: {
             username: username,
         },
