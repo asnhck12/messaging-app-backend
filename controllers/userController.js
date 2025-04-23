@@ -11,7 +11,7 @@ const { blacklistToken } = require('../middleware/jwtMiddleware');
 exports.getUsers = asyncHandler(async(req,res,next) => {
     try {
     const usernames = await prisma.User.findMany();
-    res.send("Usernames: " + usernames.map(user => user.username).join(", "));
+    res.json(usernames);
 }
 catch (error) {
     next(error);
@@ -68,9 +68,9 @@ exports.userLogin = (req, res, next) => {
                 if (err) {
                     return next(err);
                 }
-                const token = jwt.sign({ user }, process.env.jwtSecret);
+                const token = jwt.sign({ id: user.id }, process.env.jwtSecret, { expiresIn: "1d" });
 
-                return res.status(200).json({ message: "Login successful", token });
+                return res.status(200).json({ message: "Login successful", token, userId: user.id });
             });
         } catch (err) {
             return next(err);

@@ -8,41 +8,43 @@ datasource db {
 }
 
 model User {
-  id       Int       @id @default(autoincrement())
-  username String    @unique @db.VarChar(255)
-  password String    @db.VarChar(255)
-  messagesSent     Message[] @relation("SentMessages")
-  messagesReceived Message[] @relation("ReceivedMessages")
-  participants     ConversationParticipant[]
+  id            Int                       @id @default(autoincrement())
+  username      String                    @unique @db.VarChar(255)
+  password      String                    @db.VarChar(255)
+  conversations ConversationParticipant[]
+  messages      Message[]
+
+  @@map("users")
 }
 
 model Message {
-  id            Int       @id @default(autoincrement())
-  content       String    @db.VarChar(1000)
-  createdAt     DateTime  @default(now())
-  senderId      Int
-  receiverId    Int
+  id             Int          @id @default(autoincrement())
+  content        String       @db.VarChar(1000)
+  createdAt      DateTime     @default(now())
+  senderId       Int
   conversationId Int
+  conversation   Conversation @relation(fields: [conversationId], references: [id])
+  sender         User         @relation(fields: [senderId], references: [id])
 
-  sender        User      @relation("SentMessages", fields: [senderId], references: [id])
-  receiver      User      @relation("ReceivedMessages", fields: [receiverId], references: [id])
-  conversation  Conversation @relation(fields: [conversationId], references: [id])
+  @@map("message")
 }
 
 model Conversation {
-  id            Int       @id @default(autoincrement())
-  createdAt     DateTime  @default(now())
-  messages      Message[]
-  participants  ConversationParticipant[]
+  id           Int                       @id @default(autoincrement())
+  createdAt    DateTime                  @default(now())
+  participants ConversationParticipant[]
+  messages     Message[]
+
+  @@map("conversation")
 }
 
 model ConversationParticipant {
-  id              Int       @id @default(autoincrement())
-  userId          Int
-  conversationId  Int
-
-  user            User       @relation(fields: [userId], references: [id])
-  conversation    Conversation @relation(fields: [conversationId], references: [id])
+  id             Int          @id @default(autoincrement())
+  userId         Int
+  conversationId Int
+  conversation   Conversation @relation(fields: [conversationId], references: [id])
+  user           User         @relation(fields: [userId], references: [id])
 
   @@unique([userId, conversationId])
+  @@map("conversation_participant")
 }
