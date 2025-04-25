@@ -3,9 +3,10 @@ const asyncHandler = require("express-async-handler");
 const prisma = require('../db/prisma');
 
 exports.findOrCreate = asyncHandler(async (req, res) => {
-  const { userId1, userId2 } = req.body;
+  const { selectedUser } = req.body;
+  const senderId = req.userId;
 
-  if (!userId1 || !userId2 || userId1 === userId2) {
+  if (!senderId || !selectedUser || senderId === selectedUser) {
     return res.status(400).json({ error: "Two distinct user IDs are required." });
   }
 
@@ -14,11 +15,11 @@ exports.findOrCreate = asyncHandler(async (req, res) => {
     const sharedConversations = await prisma.Conversation.findMany({
       where: {
         participants: {
-          some: { userId: userId1 },
+          some: { userId: senderId },
         },
         AND: {
           participants: {
-            some: { userId: userId2 },
+            some: { userId: selectedUser },
           },
         },
       },
@@ -41,8 +42,8 @@ exports.findOrCreate = asyncHandler(async (req, res) => {
       data: {
         participants: {
           create: [
-            { user: { connect: { id: userId1 } } },
-            { user: { connect: { id: userId2 } } },
+            { user: { connect: { id: senderId } } },
+            { user: { connect: { id: selectedUser } } },
           ],
         },
       },

@@ -8,9 +8,20 @@ const passport = require("passport");
 const jwt = require('jsonwebtoken');
 const { blacklistToken } = require('../middleware/jwtMiddleware');
 
-exports.getUsers = asyncHandler(async(req,res,next) => {
-    try {
-    const usernames = await prisma.User.findMany();
+exports.getUsers = asyncHandler(async(req,res,next) => { 
+    try { 
+        const usernames = await prisma.user.findMany({
+            where: {
+              id: { not: req.userId }
+            },
+            select: {
+              username: true,
+              id: true,
+              conversations: true,
+              messages: true
+            }
+          });
+
     res.json(usernames);
 }
 catch (error) {

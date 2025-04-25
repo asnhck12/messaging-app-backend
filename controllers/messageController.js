@@ -4,7 +4,8 @@ const prisma = require('../db/prisma');
 
 exports.getMessages = asyncHandler(async (req, res) => {
     const { conversationId } = req.params;
-  
+    const userId = req.user;
+ 
     const messages = await prisma.Message.findMany({
       where: {
         conversationId: parseInt(conversationId),
@@ -41,7 +42,7 @@ exports.getMessages = asyncHandler(async (req, res) => {
     
   exports.newMessage = asyncHandler(async (req, res, next) => {
     const { content, conversationId } = req.body;
-    const senderId = req.user.id;
+    const senderId = req.userId;
   
     try {
       await prisma.Message.create({
