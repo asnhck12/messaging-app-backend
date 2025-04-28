@@ -13,8 +13,22 @@ model User {
   password      String                    @db.VarChar(255)
   conversations ConversationParticipant[]
   messages      Message[]
+  profile       Profile?
 
   @@map("users")
+}
+
+model Profile {
+  id             Int          @id @default(autoincrement())
+  firstName      String       @db.VarChar(100)
+  surName        String       @db.VarChar(100)
+  profileSummary String       @db.VarChar(1000)
+  userId         Int          
+
+  user           User         @relation(fields: [userId], references: [id])
+  
+  @@unique(userId)
+  @@map("profile")
 }
 
 model Message {
