@@ -11,7 +11,6 @@ exports.findOrCreate = asyncHandler(async (req, res) => {
   }
 
   try {
-    // Step 1: Find all shared conversations between the two users
     const sharedConversations = await prisma.Conversation.findMany({
       where: {
         participants: {
@@ -27,8 +26,6 @@ exports.findOrCreate = asyncHandler(async (req, res) => {
         participants: true,
       },
     });
-
-    // Step 2: Filter to conversations with EXACTLY 2 participants
     const existing = sharedConversations.find(
       convo => convo.participants.length === 2
     );
@@ -37,7 +34,6 @@ exports.findOrCreate = asyncHandler(async (req, res) => {
       return res.status(200).json({ conversation: existing });
     }
 
-    // Step 3: Create new 1-on-1 conversation
     const newConversation = await prisma.Conversation.create({
       data: {
         participants: {

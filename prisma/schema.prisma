@@ -20,13 +20,13 @@ model User {
 
 model Profile {
   id             Int          @id @default(autoincrement())
-  firstName      String       @db.VarChar(100)
-  surName        String       @db.VarChar(100)
-  profileSummary String       @db.VarChar(1000)
+  firstName      String?       @db.VarChar(100)
+  surName        String?       @db.VarChar(100)
+  profileSummary String?       @db.VarChar(1000)
   userId         Int          
 
   user           User         @relation(fields: [userId], references: [id])
-  
+
   @@unique(userId)
   @@map("profile")
 }
