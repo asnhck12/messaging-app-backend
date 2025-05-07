@@ -1,6 +1,7 @@
 require("dotenv").config();
 const asyncHandler = require("express-async-handler");
 const prisma = require('../db/prisma');
+const socket = require('../socket');
 
 exports.getMessages = asyncHandler(async (req, res) => {
     const { conversationId } = req.params;
@@ -45,12 +46,34 @@ exports.getMessages = asyncHandler(async (req, res) => {
     const senderId = req.userId;
   
     try {
-      await prisma.Message.create({
+      const message = await prisma.Message.create({
         data: {
           content,
           senderId,
           conversationId: parseInt(conversationId),
         },
+        include: {
+          sender: {
+            select: { id: true, username: true},
+          },
+        },
+      });
+
+      console.log("Sending message payload:", {
+        id: message.id,
+        content: message.content,
+        sender: message.sender,
+        conversationId,
+        createdAt: message.createdAt,
+      });
+
+      const io = socket.getIO();
+      io.to(conversationId.toString()).emit('receive_message', {
+        id: message.id,
+        conversationId,
+        content: message.content,
+        sender: message.sender,
+        timestamp: message.createdAt,
       });
   
       res.status(201).json({ message: "Message created successfully" });

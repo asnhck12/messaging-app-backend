@@ -1,10 +1,18 @@
 require("dotenv").config();
 const express = require("express");
+const http = require('http');
+const { Server} = require('socket.io');
+const socket = require('./socket');
+
 const prisma = require('./db/prisma');
 const app = express();
 
 const session = require("express-session");
 const cors = require('cors');
+
+const server = http.createServer(app);
+socket.init(server);
+
 var path = require('path');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
@@ -63,8 +71,8 @@ passport.deserializeUser(async (id, done) => {
 app.use(express.json());
 app.use("/", indexRouter);
 
-app.listen(3000, () =>
-    console.log(`Example app listening on port 3000!`),
+server.listen(process.env.PORT, () =>
+    console.log(`App listening on port 3000!`),
 );
 
 module.exports = app;
