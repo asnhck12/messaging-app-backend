@@ -1,10 +1,17 @@
 require("dotenv").config();
+const jwt = require("jsonwebtoken");
 
+const connectedUsers = new Map();
 let io = null;
+
+function broadcastOnlineUsers() {
+  const onlineUserIds = Array.from(connectedUsers.keys());
+  io.emit("online_users", { userIds: onlineUserIds });
+}
 
 module.exports = {
   init: (server) => {
-    io = require('socket.io')(server, {
+    io = require("socket.io")(server, {
       cors: {
         origin: process.env.socket_url,
         methods: ["GET", "POST"],
@@ -12,27 +19,73 @@ module.exports = {
       },
     });
 
+    io.use((socket, next) => {
+      const token = socket.handshake.auth?.token;
+      if (!token) return next(new Error("No token"));
+
+      try {
+        const decoded = jwt.verify(token, process.env.jwtSecret);
+        socket.userId = decoded.id;
+        next();
+      } catch (err) {
+        return next(new Error("Invalid token"));
+      }
+    });
+
     io.on("connection", (socket) => {
-      console.log("A user connected:", socket.id);
+      const userId = socket.userId;
+      if (!userId) return socket.disconnect();
+
+      console.log(`Socket connected: ${socket.id} (User ${userId})`);
+
+      const isFirstConnection = !connectedUsers.has(userId);
+      if (!connectedUsers.has(userId)) {
+        connectedUsers.set(userId, new Set());
+      }
+
+      connectedUsers.get(userId).add(socket.id);
+
+      if (isFirstConnection) {
+        io.emit("user_status", { userId, status: "online" });
+      }
+
+      broadcastOnlineUsers();
 
       socket.on("join_conversation", (conversationId) => {
         socket.join(conversationId.toString());
-        console.log(`Socket ${socket.id} joined conversation ${conversationId}`);
       });
 
       socket.on("leave_conversation", (conversationId) => {
         socket.leave(conversationId.toString());
-        console.log(`Socket ${socket.id} left conversation ${conversationId}`);
       });
 
       socket.on("disconnect", () => {
-        console.log("User disconnected:", socket.id);
+        console.log(`Socket disconnected: ${socket.id} (User ${userId})`);
+      
+        const userSockets = connectedUsers.get(userId);
+        if (userSockets) {
+          userSockets.delete(socket.id);
+      
+          if (userSockets.size === 0) {
+            setTimeout(() => {
+              const currentSockets = connectedUsers.get(userId);
+              if (!currentSockets || currentSockets.size === 0) {
+                connectedUsers.delete(userId);
+                io.emit("user_status", { userId, status: "offline" });
+                broadcastOnlineUsers();
+              }
+            }, 1000);
+          }
+        }
       });
+      
     });
+
+    return io;
   },
 
   getIO: () => {
     if (!io) throw new Error("Socket.IO not initialized");
     return io;
-  }
+  },
 };
