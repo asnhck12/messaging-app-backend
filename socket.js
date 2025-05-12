@@ -36,8 +36,6 @@ module.exports = {
       const userId = socket.userId;
       if (!userId) return socket.disconnect();
 
-      console.log(`Socket connected: ${socket.id} (User ${userId})`);
-
       const isFirstConnection = !connectedUsers.has(userId);
       if (!connectedUsers.has(userId)) {
         connectedUsers.set(userId, new Set());
@@ -54,13 +52,23 @@ module.exports = {
       socket.on("join_conversation", (conversationId) => {
         socket.join(conversationId.toString());
       });
+      
+
+      socket.on("typing", ({ conversationId }) => {
+        socket.to(conversationId.toString()).emit("set_typing", { conversationId });
+      });
+      
+    
+      socket.on("stop_typing", ({ conversationId }) => {
+        if (!conversationId) return;
+        socket.to(conversationId.toString()).emit("set_stop_typing", { conversationId });
+      });
 
       socket.on("leave_conversation", (conversationId) => {
         socket.leave(conversationId.toString());
       });
 
       socket.on("disconnect", () => {
-        console.log(`Socket disconnected: ${socket.id} (User ${userId})`);
       
         const userSockets = connectedUsers.get(userId);
         if (userSockets) {
