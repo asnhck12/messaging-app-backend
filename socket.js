@@ -35,7 +35,7 @@ module.exports = {
     io.on("connection", (socket) => {
       const userId = socket.userId;
       if (!userId) return socket.disconnect();
-
+       
       const isFirstConnection = !connectedUsers.has(userId);
       if (!connectedUsers.has(userId)) {
         connectedUsers.set(userId, new Set());
@@ -68,8 +68,7 @@ module.exports = {
         socket.leave(conversationId.toString());
       });
 
-      socket.on("disconnect", () => {
-      
+      socket.on("disconnect", () => {     
         const userSockets = connectedUsers.get(userId);
         if (userSockets) {
           userSockets.delete(socket.id);
