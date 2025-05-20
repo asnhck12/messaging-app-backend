@@ -59,14 +59,6 @@ exports.getMessages = asyncHandler(async (req, res) => {
         },
       });
 
-      console.log("Sending message payload:", {
-        id: message.id,
-        content: message.content,
-        sender: message.sender,
-        conversationId,
-        createdAt: message.createdAt,
-      });
-
       const io = socket.getIO();
       io.to(conversationId.toString()).emit('receive_message', {
         id: message.id,

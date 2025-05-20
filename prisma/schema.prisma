@@ -46,6 +46,8 @@ model Message {
 model Conversation {
   id           Int                       @id @default(autoincrement())
   createdAt    DateTime                  @default(now())
+  name         String?   @db.VarChar(255)
+  isGroup      Boolean   @default(false)
   participants ConversationParticipant[]
   messages     Message[]
 
