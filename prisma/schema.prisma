@@ -33,7 +33,8 @@ model Profile {
 
 model Message {
   id             Int          @id @default(autoincrement())
-  content        String       @db.VarChar(1000)
+  content        String?       @db.VarChar(1000)
+  imageUrl       String? 
   createdAt      DateTime     @default(now())
   senderId       Int
   conversationId Int

@@ -70,6 +70,8 @@ passport.deserializeUser(async (id, done) => {
 
 app.use(express.json());
 app.use("/", indexRouter);
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
 
 server.listen(process.env.PORT, () =>
     console.log(`App listening on port 3000!`),

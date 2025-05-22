@@ -3,3 +3,6 @@ node_modules
 populatedb.js
 queries.js
 migrations
+uploads
+upload.js
+uploadController.js

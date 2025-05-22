@@ -46,11 +46,19 @@ exports.getMessages = asyncHandler(async (req, res) => {
     const senderId = req.userId;
   
     try {
+      let imageUrl = null;
+      
+      if (req.file) {
+        imageUrl = `/uploads/${req.file.filename}`;
+      }
+
+
       const message = await prisma.Message.create({
         data: {
           content,
           senderId,
           conversationId: parseInt(conversationId),
+          imageUrl,
         },
         include: {
           sender: {
@@ -64,11 +72,12 @@ exports.getMessages = asyncHandler(async (req, res) => {
         id: message.id,
         conversationId,
         content: message.content,
+        imageUrl: message.imageUrl,
         sender: message.sender,
         timestamp: message.createdAt,
       });
   
-      res.status(201).json({ message: "Message created successfully" });
+      res.status(201).json({ message });
     } catch (error) {
       console.error(error);
       next(error);
