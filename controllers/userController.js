@@ -4,6 +4,7 @@ const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 const { body, validationResult } = require("express-validator");
 const bcrypt = require("bcrypt");
+const crypto = require('crypto');
 const passport = require("passport");
 const jwt = require('jsonwebtoken');
 const { blacklistToken } = require('../middleware/jwtMiddleware');
@@ -108,3 +109,31 @@ exports.userLogout = asyncHandler(async (req, res, next) => {
         res.status(200).json({ message: "Logged out successfully" });
     });
 });
+
+exports.guestLogin = asyncHandler(async(req, res, next) => {
+    try {
+
+    const guestUsername = `Guest_${crypto.randomBytes(3).toString('hex')}`;
+    const dummyPassword = crypto.randomBytes(16).toString('hex');
+    const hashedPassword = await bcrypt.hash(dummyPassword, 10);
+
+
+        const guestUser = await prisma.User.create({
+            data:{
+                username: guestUsername,
+                isGuest: true,
+                password: hashedPassword
+            }
+        });
+        
+        const token = jwt.sign(
+            { id: guestUser.id },
+             process.env.jwtSecret,
+            { expiresIn: '2h' }
+    );
+    
+    res.json({ token, user: guestUser });} 
+        catch (err) {
+            return next(err);
+        }
+    })

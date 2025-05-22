@@ -10,6 +10,7 @@ datasource db {
 model User {
   id            Int                       @id @default(autoincrement())
   username      String                    @unique @db.VarChar(255)
+  isGuest       Boolean                   @default(false)
   password      String                    @db.VarChar(255)
   conversations ConversationParticipant[]
   messages      Message[]
