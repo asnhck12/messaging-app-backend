@@ -12,6 +12,7 @@ model User {
   username      String                    @unique @db.VarChar(255)
   isGuest       Boolean                   @default(false)
   password      String                    @db.VarChar(255)
+  isDeleted     Boolean                   @default(false)
   createdAt     DateTime                  @default(now())
   conversations ConversationParticipant[]
   messages      Message[]                 @relation("UserMessages")
@@ -58,10 +59,10 @@ model Conversation {
 
 model ConversationParticipant {
   id             Int          @id @default(autoincrement())
-  userId         Int
+  userId         Int?
   conversationId Int
   conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
-  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user           User?        @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, conversationId])
   @@map("conversation_participant")
