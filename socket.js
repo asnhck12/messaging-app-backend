@@ -95,4 +95,6 @@ module.exports = {
     if (!io) throw new Error("Socket.IO not initialized");
     return io;
   },
+
+  connectedUsers,
 };

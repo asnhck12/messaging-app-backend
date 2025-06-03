@@ -10,20 +10,53 @@ exports.find = asyncHandler(async (req, res) => {
 }
 
 try {
-  const allConversations = await prisma.conversation.findMany({
+  const allConversations = await prisma.Conversation.findMany({
     where: {
-      participants: {
-        some: { userId: senderId },
-      },
-    },
-    include: {
-      participants: {
-        include: {
-          user: true,
+        participants: {
+          some: { userId: senderId },
         },
       },
-    },
-  });
+      include: {
+        participants: {
+          include: {
+            user: true,
+          },
+        },
+        messages: {
+          take: 1,
+          orderBy: {
+            createdAt: 'desc',
+          },
+          select: {
+            id: true,
+            content: true,
+            createdAt: true,
+            imageUrl: true,
+            sender: {
+              select: {
+                id: true,
+                username: true,
+              },
+            },
+          },
+        },_count: {
+          select: {
+            messages: {
+              where: {
+                senderId: {
+                  not: senderId,
+                },
+                reads: {
+                  none: {
+                    userId: senderId,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
 
   const filteredConversations = allConversations.map((conversation) => ({
     ...conversation,
@@ -76,7 +109,42 @@ const existing = sharedConversations.find((convo) => {
 });
 
     if (existing) {
-      return res.status(200).json({ conversation: existing });
+      const conversationWithMessage = await prisma.Conversation.findUnique({
+        where: { id: existing.id },
+        include: {
+          participants: {
+            include: {
+              user: {
+                select: {
+                  id: true,
+                  username: true,
+                  isDeleted: true,
+                },
+              },
+            },
+          },
+          messages: {
+            take: 1,
+            orderBy: {
+              createdAt: 'desc',
+            },
+            select: {
+              id: true,
+              content: true,
+              createdAt: true,
+              imageUrl: true,
+              sender: {
+                select: {
+                  id: true,
+                  username: true,
+                },
+              },
+            },
+          },
+        },
+      });
+
+      return res.status(200).json({ conversation: conversationWithMessage });
     }
 
     const isGroup = allParticipantIds.length > 2;
@@ -91,7 +159,35 @@ const existing = sharedConversations.find((convo) => {
         },
       },
       include: {
-        participants: true,
+        participants: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                username: true,
+                isDeleted: true,
+              },
+            },
+          },
+        },
+        messages: {
+          take: 1,
+          orderBy: {
+            createdAt: 'desc',
+          },
+          select: {
+            id: true,
+            content: true,
+            createdAt: true,
+            imageUrl: true,
+            sender: {
+              select: {
+                id: true,
+                username: true,
+              },
+            },
+          },
+        },
       },
     });
 

@@ -2,6 +2,7 @@ require("dotenv").config();
 const asyncHandler = require("express-async-handler");
 const prisma = require('../db/prisma');
 const socket = require('../socket');
+const {connectedUsers} = socket;
 
 exports.getMessages = asyncHandler(async (req, res) => {
     const { conversationId } = req.params;
@@ -62,20 +63,40 @@ exports.getMessages = asyncHandler(async (req, res) => {
         },
         include: {
           sender: {
-            select: { id: true, username: true},
+            select: { id: true, username: true, isDeleted: true},
           },
         },
       });
 
       const io = socket.getIO();
-      io.to(conversationId.toString()).emit('receive_message', {
-        id: message.id,
-        conversationId,
-        content: message.content,
-        imageUrl: message.imageUrl,
-        sender: message.sender,
-        timestamp: message.createdAt,
-      });
+
+      const participants = await prisma.conversationParticipant.findMany({
+  where: {
+    conversationId: parseInt(conversationId),
+    userId: { not: senderId },
+      },
+      select: { userId: true },
+    });
+
+for (const participant of participants) {
+  const sockets = connectedUsers.get(participant.userId);
+  if (sockets) {
+    sockets.forEach(socketId => {
+      io.to(socketId).emit('conversations_updated');
+    });
+  }
+}
+
+      io.to(conversationId.toString()).emit('receive_message', message
+      //   {
+      //   id: message.id,
+      //   conversationId,
+      //   content: message.content,
+      //   imageUrl: message.imageUrl,
+      //   sender: message.sender,
+      //   timestamp: message.createdAt,
+      // }
+    );
   
       res.status(201).json({ message });
     } catch (error) {
@@ -84,3 +105,31 @@ exports.getMessages = asyncHandler(async (req, res) => {
     }
   });
   
+  exports.markAsRead = asyncHandler(async (req, res) => {
+  const userId = req.userId;
+  const { conversationId } = req.body;
+
+  const unreadMessages = await prisma.message.findMany({
+    where: {
+      conversationId: parseInt(conversationId),
+      reads: {
+        none: { userId }
+      }
+    },
+    select: { id: true }
+  });
+
+  const data = unreadMessages.map(msg => ({
+    messageId: msg.id,
+    userId
+  }));
+
+  if (data.length > 0) {
+    await prisma.messageRead.createMany({
+      data,
+      skipDuplicates: true
+    });
+  }
+
+  res.json({ success: true });
+});

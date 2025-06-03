@@ -24,5 +24,8 @@ router.get('/:conversationId',verifyToken,message_controller.getMessages);
 /* POST new users */
 router.post('/newmessage',verifyToken,upload.single("image"), message_controller.newMessage);
 
+/* POST mark messages as read. */
+router.post('/markasread',verifyToken,message_controller.markAsRead);
+
 
 module.exports = router;
