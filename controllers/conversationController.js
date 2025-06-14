@@ -147,6 +147,10 @@ const existing = sharedConversations.find((convo) => {
       return res.status(200).json({ conversation: conversationWithMessage });
     }
 
+    if (!content && !imageUrl) {
+      return res.status(400).json({ error: "A new message must be included to start a new conversation." });
+    }
+
     const isGroup = allParticipantIds.length > 2;
     const newConversation = await prisma.Conversation.create({
       data: {
