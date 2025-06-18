@@ -74,7 +74,7 @@ try {
 
 
 exports.findOrCreate = asyncHandler(async (req, res) => {
-  const { selectedUser, groupName } = req.body;
+  const { selectedUser, groupName, content, imageUrl } = req.body;
   const senderId = req.userId;
 
   if (!senderId || typeof senderId !== 'number' || !Array.isArray(selectedUser)) {
@@ -82,6 +82,8 @@ exports.findOrCreate = asyncHandler(async (req, res) => {
   }
 
   const allParticipantIds = Array.from(new Set([...selectedUser, senderId]));
+  const isGroup = allParticipantIds.length > 2;
+
 
   if (allParticipantIds.length < 2) {
     return res.status(400).json({ error: "At least two unique users required." });
@@ -91,6 +93,7 @@ exports.findOrCreate = asyncHandler(async (req, res) => {
     const sortedParticipantIds = [...allParticipantIds].sort();
     const sharedConversations = await prisma.Conversation.findMany({
       where: {
+        isGroup: isGroup,
         participants: {
           some: { userId: {in: allParticipantIds} },
         },
@@ -147,11 +150,9 @@ const existing = sharedConversations.find((convo) => {
       return res.status(200).json({ conversation: conversationWithMessage });
     }
 
-    if (!content && !imageUrl) {
-      return res.status(400).json({ error: "A new message must be included to start a new conversation." });
-    }
-
-    const isGroup = allParticipantIds.length > 2;
+    if (!content && !imageUrl && !isGroup) {
+      return res.status(200).json({ conversation: null });
+}
     const newConversation = await prisma.Conversation.create({
       data: {
         isGroup,
