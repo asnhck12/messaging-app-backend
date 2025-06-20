@@ -31,7 +31,7 @@ catch (error) {
 })
 
 exports.newUser = [
-    body("username", "Please enter a Username").trim().isLength({ min:2 }).escape(),
+    body("username", "Please enter a Username").trim().toLowerCase().isLength({ min:2 }).escape(),
     body("password", "Please enter a Password").isLength({ min:8 }).escape(),
     body("confirm_password", "Please confirm your Password").custom((value, { req }) => {
         if (value !== req.body.password) {
@@ -45,32 +45,42 @@ exports.newUser = [
             console.log("Validation errors:", errors.array());
             return res.status(400).json({ errors: errors.array() });
         }
+
+        const normalizedUsername = req.body.username.trim().toLowerCase();
+        
         try {
-            const userExists = await prisma.User.findUnique({ where: {
-                username: req.body.username} });
-                    if (userExists) {
-                        return res.status(400).json({ errors: [{ msg: "Username already exists" }] });
-                    }
-        
-                    const hashedPassword = await bcrypt.hash(req.body.password, 10);
-        
-                    await prisma.User.create({
-                        data: {
-                        username: req.body.username,
-                        password: hashedPassword,
-                        profile: {
-                            create: {},
-                          },
-                        }
-                    });
-        
-                    res.status(201).json({ message: "User created successfully" });
-                } catch (err) {
-                    return next(err);
+            const userExists = await prisma.User.findUnique({
+                where: { username: normalizedUsername },
+            });
+            
+            if (userExists) {return res.status(400).json({ errors: [{ msg: "Username already exists" }] });}
+            
+            const hashedPassword = await bcrypt.hash(req.body.password, 10);
+            
+            await prisma.User.create({
+                data: {
+                    username: normalizedUsername,
+                    password: hashedPassword,
+                    profile: {
+                        create: {},
+                    },
                 }
-            })]
+            });
+            
+            res.status(201).json({ message: "User created successfully" });
+        } catch (err) {
+            if (err.code === 'P2002' && err.meta?.target?.includes('username')) {
+                return res.status(400).json({ errors: [{ msg: "Username already exists" }] });
+            }
+            return next(err);
+        }
+    })]
 
 exports.userLogin = (req, res, next) => {
+    if (req.body.username) {
+        req.body.username = req.body.username.toLowerCase();
+    }
+
     passport.authenticate("local", async (err, user, info) => {
         try {
             if (err) {
