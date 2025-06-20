@@ -1,6 +1,8 @@
 require("dotenv").config();
 const asyncHandler = require("express-async-handler");
 const prisma = require('../db/prisma');
+const { connectedUsers, getIO } = require("../socket"); // adjust path
+const io = getIO();
 
 exports.find = asyncHandler(async (req, res) => {
   const senderId = req.userId;
@@ -195,6 +197,17 @@ const existing = sharedConversations.find((convo) => {
         },
       },
     });
+
+if (isGroup && !content && !imageUrl) {
+  for (const participant of newConversation.participants) {
+    const sockets = connectedUsers.get(participant.userId);
+    if (sockets) {
+      sockets.forEach(socketId => {
+        io.to(socketId).emit("conversations_updated");
+      });
+    }
+  }
+}
 
     res.status(201).json({ conversation: newConversation });
   } catch (error) {
