@@ -88,14 +88,6 @@ for (const participant of participants) {
 }
 
       io.to(conversationId.toString()).emit('receive_message', message
-      //   {
-      //   id: message.id,
-      //   conversationId,
-      //   content: message.content,
-      //   imageUrl: message.imageUrl,
-      //   sender: message.sender,
-      //   timestamp: message.createdAt,
-      // }
     );
   
       res.status(201).json({ message });

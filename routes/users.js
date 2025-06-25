@@ -16,7 +16,7 @@ router.post('/login',user_controller.userLogin)
 /* GET user logout */
 router.post('/logout',user_controller.userLogout)
 
-/* GET user login */
+/* GET user guest login */
 router.post('/guestLogin',user_controller.guestLogin)
 
 module.exports = router;

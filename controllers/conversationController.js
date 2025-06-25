@@ -1,7 +1,7 @@
 require("dotenv").config();
 const asyncHandler = require("express-async-handler");
 const prisma = require('../db/prisma');
-const { connectedUsers, getIO } = require("../socket"); // adjust path
+const { connectedUsers, getIO } = require("../socket");
 const io = getIO();
 
 exports.find = asyncHandler(async (req, res) => {

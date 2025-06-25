@@ -31,50 +31,80 @@ catch (error) {
 })
 
 exports.newUser = [
-    body("username", "Please enter a Username").trim().toLowerCase().isLength({ min:2 }).escape(),
-    body("password", "Please enter a Password").isLength({ min:8 }).escape(),
-    body("confirm_password", "Please confirm your Password").custom((value, { req }) => {
-        if (value !== req.body.password) {
-            throw new Error("Passwords do not match");
-        }
-        return true;
-    }),
-    asyncHandler(async (req, res, next) => {
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) {
-            console.log("Validation errors:", errors.array());
-            return res.status(400).json({ errors: errors.array() });
-        }
+  body("username", "Please enter a Username")
+    .trim()
+    .toLowerCase()
+    .isLength({ min: 2 })
+    .escape(),
+  body("password", "Please enter a Password")
+    .isLength({ min: 8 })
+    .escape(),
+  body("confirm_password", "Please confirm your Password").custom(
+    (value, { req }) => {
+      if (value !== req.body.password) {
+        throw new Error("Passwords do not match");
+      }
+      return true;
+    }
+  ),
+  asyncHandler(async (req, res, next) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      console.log("Validation errors:", errors.array());
+      return res.status(400).json({ errors: errors.array() });
+    }
 
-        const normalizedUsername = req.body.username.trim().toLowerCase();
-        
-        try {
-            const userExists = await prisma.User.findUnique({
-                where: { username: normalizedUsername },
-            });
-            
-            if (userExists) {return res.status(400).json({ errors: [{ msg: "Username already exists" }] });}
-            
-            const hashedPassword = await bcrypt.hash(req.body.password, 10);
-            
-            await prisma.User.create({
-                data: {
-                    username: normalizedUsername,
-                    password: hashedPassword,
-                    profile: {
-                        create: {},
-                    },
-                }
-            });
-            
-            res.status(201).json({ message: "User created successfully" });
-        } catch (err) {
-            if (err.code === 'P2002' && err.meta?.target?.includes('username')) {
-                return res.status(400).json({ errors: [{ msg: "Username already exists" }] });
-            }
-            return next(err);
-        }
-    })]
+    const normalizedUsername = req.body.username.trim().toLowerCase();
+
+    try {
+      const userExists = await prisma.user.findUnique({
+        where: { username: normalizedUsername },
+      });
+
+      if (userExists) {
+        return res
+          .status(400)
+          .json({ errors: [{ msg: "Username already exists" }] });
+      }
+
+      const hashedPassword = await bcrypt.hash(req.body.password, 10);
+
+      const newUser = await prisma.user.create({
+        data: {
+          username: normalizedUsername,
+          password: hashedPassword,
+          isGuest: false,
+          profile: {
+            create: {},
+          },
+        },
+      });
+
+      const globalChat = await prisma.conversation.findUnique({
+        where: { name: "Global Chat" },
+      });
+
+      if (globalChat) {
+        await prisma.conversationParticipant.create({
+          data: {
+            userId: newUser.id,
+            conversationId: globalChat.id,
+          },
+        });
+      }
+
+      res.status(201).json({ message: "User created successfully" });
+    } catch (err) {
+      if (err.code === "P2002" && err.meta?.target?.includes("username")) {
+        return res
+          .status(400)
+          .json({ errors: [{ msg: "Username already exists" }] });
+      }
+      return next(err);
+    }
+  }),
+];
+
 
 exports.userLogin = (req, res, next) => {
     if (req.body.username) {
@@ -123,7 +153,7 @@ exports.userLogout = asyncHandler(async (req, res, next) => {
 exports.guestLogin = asyncHandler(async(req, res, next) => {
     try {
 
-    const guestUsername = `Guest_${crypto.randomBytes(3).toString('hex')}`;
+        const guestUsername = `Guest_${crypto.randomBytes(2).toString('hex')}`;
     const dummyPassword = crypto.randomBytes(16).toString('hex');
     const hashedPassword = await bcrypt.hash(dummyPassword, 10);
 
@@ -132,7 +162,10 @@ exports.guestLogin = asyncHandler(async(req, res, next) => {
             data:{
                 username: guestUsername,
                 isGuest: true,
-                password: hashedPassword
+                password: hashedPassword,
+                profile: {
+                        create: {},
+                    },
             }
         });
         

@@ -15,14 +15,25 @@ exports.getMyProfile = asyncHandler(async(req,res,next) => {
               firstName: true,
               surName: true,
               profileSummary: true,
+              user: {
+                select:{
+                  isGuest: true
+                }
+              }
             }
           });
 
           if (!profile) {
             return res.status(404).json({ error: "Profile not found" });
           }
+
+          const result = {
+            ...profile,
+            isGuest: profile.user.isGuest
+          };
+          delete result.user;
       
-          res.json(profile);
+          res.json(result);
         } catch (error) {
           next(error);
         }
@@ -39,6 +50,11 @@ exports.getProfile = asyncHandler(async(req,res,next) => {
               firstName: true,
               surName: true,
               profileSummary: true,
+              user: {
+                select:{
+                  username: true
+                }
+              }
             }
           });
 
