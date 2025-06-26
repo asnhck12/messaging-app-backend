@@ -17,6 +17,7 @@ exports.getMyProfile = asyncHandler(async(req,res,next) => {
               profileSummary: true,
               user: {
                 select:{
+                  username:true,
                   isGuest: true
                 }
               }
@@ -29,6 +30,7 @@ exports.getMyProfile = asyncHandler(async(req,res,next) => {
 
           const result = {
             ...profile,
+            username: profile.user.username,
             isGuest: profile.user.isGuest
           };
           delete result.user;
