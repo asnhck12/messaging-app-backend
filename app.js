@@ -1,4 +1,5 @@
 require("dotenv").config();
+const frontend_url = process.env.FRONTEND_URI;
 const express = require("express");
 const http = require('http');
 const { Server} = require('socket.io');
@@ -22,8 +23,7 @@ const passport = require("passport");
 
 var indexRouter = require('./routes');
 
-app.use(cors());
-app.use(logger('dev'));
+app.use(cors({ origin: `${frontend_url}`, credentials: true }));app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
