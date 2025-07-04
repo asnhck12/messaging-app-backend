@@ -5,6 +5,8 @@ const http = require('http');
 const { Server} = require('socket.io');
 const socket = require('./socket');
 
+console.log('Allowed origin:', frontend_url); // Add this line to debug
+
 const prisma = require('./db/prisma');
 const app = express();
 
