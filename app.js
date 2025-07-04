@@ -23,7 +23,8 @@ const passport = require("passport");
 
 var indexRouter = require('./routes');
 
-app.use(cors({ origin: `${frontend_url}`, credentials: true }));app.use(logger('dev'));
+app.use(cors({ origin: `${frontend_url}`, credentials: true }));
+app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
