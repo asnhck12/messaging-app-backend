@@ -1,9 +1,10 @@
 # Messaging App Backend
 
-The backend API for a blogging platform built with Express.js. It supports two separate frontends, one for general users and one for writers, providing full CRUD functionality for blogs and comments, along with user authentication.
+This is the backend API for a real-time messaging application built with Node.js and Express.js. It handles user authentication, one-on-one or group messaging, and supports real-time communication using Socket.IO.
 
 The stack used for this project:
 
  - Node.js + Express.js
- - Database: MongoDB (via Mongoose)
+ - Database: PostgreSQL
  - Authentication: JSON Web Tokens (JWT)
+ - Socket.io
